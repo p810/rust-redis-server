@@ -16,7 +16,7 @@ impl RespCommandConstructor for RespEchoCommand {
         let value = match input_string {
             RespElement::SimpleString(s) => s.value.clone(),
             RespElement::BulkString(b) => {
-                match String::from_utf8(b.value.clone()) {
+                match String::from_utf8(b.value.to_vec()) {
                     Ok(as_string) => as_string,
                     Err(_) => return Err(RespCommandError::ParsingError),
                 }

@@ -8,7 +8,7 @@ use crate::resp::parser::{
 #[derive(Debug)]
 pub struct RespBulkString {
     pub length: usize,
-    pub value: Vec<u8>,
+    pub value: Box<[u8]>,
 }
 
 impl RespElementConstructor for RespBulkString {
@@ -21,7 +21,7 @@ impl RespElementConstructor for RespBulkString {
 
         let (length, remaining_bytes) = get_length_of_current_element(packet)?;
         
-        let buffer: Vec<u8> = remaining_bytes[0..length].to_vec();
+        let buffer: Box<[u8]> = Box::from(&remaining_bytes[0..length]);
 
         let (remainder_of_line, next_line) = read_until_crlf(&remaining_bytes[length..]).unwrap();
 

@@ -16,7 +16,7 @@ impl RespCommandConstructor for RespGetCommand {
         let key = match key_element {
             RespElement::SimpleString(s) => s.value.clone(),
             RespElement::BulkString(b) => {
-                let Ok(as_string) = String::from_utf8(b.value.clone()) else {
+                let Ok(as_string) = String::from_utf8(b.value.to_vec()) else {
                     return Err(RespCommandError::InvalidArgument);
                 };
                 

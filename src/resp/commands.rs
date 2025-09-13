@@ -73,12 +73,12 @@ pub fn get_command_from_input(packet: &[u8]) -> Result<RespCommand, RespCommandE
     }
 }
 
-fn get_command_name(bytes: &Vec<u8>) -> Result<String, RespCommandError> {
+fn get_command_name(bytes: &[u8]) -> Result<String, RespCommandError> {
     if !bytes.into_iter().all(| byte | byte.is_ascii_alphabetic()) {
         return Err(RespCommandError::ParsingError);
     }
 
-    let Ok(command) = String::from_utf8(bytes.clone()) else {
+    let Ok(command) = String::from_utf8(bytes.to_vec()) else {
         return Err(RespCommandError::ParsingError);
     };
 
