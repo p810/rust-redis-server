@@ -1,10 +1,21 @@
-use std::collections::HashMap;
+use std::collections::{VecDeque};
 use std::io::{Error, ErrorKind, Read, Write};
 use std::{thread, time::Duration};
 use std::net::{TcpListener, TcpStream};
-use crate::resp::server::respond_to_request;
+use std::sync::mpsc::{channel, Receiver, TryRecvError};
+
+use crate::resp::commands::get_command_from_input;
+use crate::worker::{spawn_worker, WorkerMessage, WorkerResponse};
 
 mod resp;
+mod store;
+mod worker;
+
+struct Client {
+    stream: TcpStream,
+    read_buffer: Vec<u8>,
+    pending: VecDeque<Receiver<WorkerResponse>>,
+}
 
 fn main() -> Result<(), Error> {
     println!("Server started, now listening for connections...");
@@ -13,22 +24,22 @@ fn main() -> Result<(), Error> {
 
     listener.set_nonblocking(true)?;
 
-    let mut clients: HashMap<u64, TcpStream> = HashMap::new();
-    let mut next_id: u64 = 1;
+    let mut conns: Vec<Client> = Vec::new();
 
-    let mut buf = [0u8; 1024];
-
-    let mut store: HashMap<String, Vec<u8>> = HashMap::new();
+    let worker_tx = spawn_worker();
 
     loop {
         match listener.accept() {
             Ok((stream, _addr)) => {
                 stream.set_nonblocking(true)?;
 
-                let id = next_id;
-                next_id += 1;
+                println!("Accepting new connection");
 
-                clients.insert(id, stream);
+                conns.push(Client {
+                    stream,
+                    read_buffer: vec![0; 1024],
+                    pending: VecDeque::new(),
+                });
             }
 
             Err(ref e) if e.kind() == ErrorKind::WouldBlock => {
@@ -40,17 +51,38 @@ fn main() -> Result<(), Error> {
 
         let mut closed_connections = Vec::new();
 
-        for (id, stream) in clients.iter_mut() {
+        for (i, client) in conns.iter_mut().enumerate() {
+            let mut stream = &client.stream;
+            let mut buf = &mut client.read_buffer;
+
             match stream.read(&mut buf) {
-                Ok(0) => closed_connections.push(*id),
+                Ok(0) => closed_connections.push(i),
 
                 Ok(n) => {
-                    match respond_to_request(&buf[..n], &mut store) {
-                        Ok(data) => {
-                            stream.write_all(&data)?;
+                    println!("Read {n} bytes");
+
+                    match get_command_from_input(&buf[..n]) {
+                        Ok(command) => {
+                            let (response_tx, response_rx) = channel::<WorkerResponse>();
+
+                            let message = WorkerMessage {
+                                op: command,
+                                reply: response_tx,
+                            };
+
+                            client.pending.push_back(response_rx);
+
+                            match worker_tx.send(message) {
+                                Err(e) => {
+                                    eprintln!("Unable to send message to worker thread");
+                                    dbg!(e);
+                                }
+                                _ => {}
+                            };
                         }
-                        Err(e) => {
-                            dbg!(e);
+                        Err(_) => {
+                            // to do: better error handling
+                            stream.write_all("-ERR an error occurred\r\n".as_bytes())?;
                         }
                     }
                 }
@@ -59,12 +91,37 @@ fn main() -> Result<(), Error> {
                     // do nothing
                 }
 
-                Err(_) => closed_connections.push(*id)
+                Err(_) => {
+                    closed_connections.push(i);
+                }
             }
+
+            while let Some(front) = client.pending.front() {
+                match front.try_recv() {
+                    Ok(response) => {
+                        client.pending.pop_front();
+
+                        if let Ok(payload) = response {
+                            if let Some(data) = payload {
+                                client.stream.write_all(&data)?;
+
+                                let outgoing = data.len();
+                                println!("Wrote {outgoing} bytes");
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        if e != TryRecvError::Empty {
+                            eprintln!("Error while draining pending responses");
+                            dbg!(e);
+                        }
+                    }
+                }
+            };
         }
 
-        for id in closed_connections {
-            clients.remove(&id);
+        for i in closed_connections {
+            conns.swap_remove(i);
         }
 
         // 5ms backoff to prevent busy waiting
