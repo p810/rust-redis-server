@@ -1,5 +1,4 @@
 pub mod parser;
-pub mod server;
 pub mod types;
 pub mod commands;
 
@@ -11,6 +10,7 @@ pub enum RespElement {
     Array(RespArray),
     SimpleString(RespSimpleString),
     BulkString(RespBulkString),
+    Integer(RespInteger),
 }
 
 impl RespElementConstructor for RespElement {
@@ -19,6 +19,7 @@ impl RespElementConstructor for RespElement {
             Some(b'*') => RespArray::from_byte_slice(slice).map(| (a, r) | (RespElement::Array(a), r)),
             Some(b'+') => RespSimpleString::from_byte_slice(slice).map(| (s, r) | (RespElement::SimpleString(s), r)),
             Some(b'$') => RespBulkString::from_byte_slice(slice).map(| (b, r) | (RespElement::BulkString(b), r)),
+            Some(b':') => RespInteger::from_byte_slice(slice).map(| (i, r) | (RespElement::Integer(i), r)),
             Some(_) => Err(RespParseError::UnknownTypePrefix),
             None => Err(RespParseError::UnexpectedEof),
         }

@@ -6,3 +6,6 @@ pub use simple_string::RespSimpleString;
 
 pub mod bulk_string;
 pub use bulk_string::RespBulkString;
+
+pub mod integer;
+pub use integer::RespInteger;
