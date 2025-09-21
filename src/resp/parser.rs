@@ -1,3 +1,5 @@
+use crate::resp::RESP_DELIMITER;
+
 #[derive(Debug)]
 pub enum RespParseError {
     UnexpectedEof,
@@ -31,7 +33,7 @@ pub trait RespDeserialize {
 /// empty slice as its second.
 pub fn read_until_crlf(input: &[u8]) -> Option<(&[u8], &[u8])> {
     let position_of_crlf = input.windows(2)
-        .position(| bytes | bytes == b"\r\n");
+        .position(| bytes | bytes == RESP_DELIMITER);
 
     match position_of_crlf {
         Some(index) => Some((&input[0..index], &input[(index + 2)..])),
