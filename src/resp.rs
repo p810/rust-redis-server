@@ -3,7 +3,7 @@ pub mod types;
 pub mod commands;
 
 use crate::resp::types::*;
-use crate::resp::parser::{RespElementConstructor, RespParseError, RespSerialize};
+use crate::resp::parser::{RespDeserialize, RespParseError, RespSerialize};
 
 pub const RESP_DELIMITER: &[u8] = b"\r\n";
 pub const RESP_OK: &[u8] = b"+OK\r\n";
@@ -38,7 +38,7 @@ impl RespSerialize for RespElement {
     }
 }
 
-impl RespElementConstructor for RespElement {
+impl RespDeserialize for RespElement {
     fn from_byte_slice(slice: &[u8]) -> Result<(Self, &[u8]), RespParseError> {
         match slice.first() {
             Some(b'*') => RespArray::from_byte_slice(slice).map(| (a, r) | (RespElement::Array(a), r)),

@@ -1,7 +1,7 @@
 use crate::resp::{RespElement, RESP_DELIMITER};
 use crate::resp::parser::{
     RespSerialize,
-    RespElementConstructor,
+    RespDeserialize,
     RespParseError,
     get_length_of_current_element,
 };
@@ -38,7 +38,7 @@ impl RespSerialize for RespArray {
     }
 }
 
-impl RespElementConstructor for RespArray {
+impl RespDeserialize for RespArray {
     fn from_byte_slice(slice: &[u8]) -> Result<(Self, &[u8]), RespParseError> {
         if slice[0] != b'*' {
             return Err(RespParseError::UnknownTypePrefix);

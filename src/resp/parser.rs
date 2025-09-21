@@ -9,7 +9,7 @@ pub trait RespSerialize {
     fn to_bytes(&self) -> Vec<u8>;
 }
 
-pub trait RespElementConstructor {
+pub trait RespDeserialize {
     /// Parses the given byte slice and returns a `Result` that contains either:
     /// 
     ///   - a.) A tuple with an instance of the implementer, as well as a byte

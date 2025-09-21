@@ -1,6 +1,6 @@
 use crate::resp::parser::{
     RespSerialize,
-    RespElementConstructor,
+    RespDeserialize,
     RespParseError,
     read_until_crlf,
 };
@@ -20,7 +20,7 @@ impl RespSerialize for RespSimpleString {
     }
 }
 
-impl RespElementConstructor for RespSimpleString {
+impl RespDeserialize for RespSimpleString {
     fn from_byte_slice(input: &[u8]) -> Result<(Self, &[u8]), RespParseError> {
         if input[0] != b'+' {
             return Err(RespParseError::UnknownTypePrefix);

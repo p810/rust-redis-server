@@ -2,7 +2,7 @@ use crate::resp::RESP_DELIMITER;
 
 use crate::resp::parser::{
     RespSerialize,
-    RespElementConstructor,
+    RespDeserialize,
     RespParseError,
     read_until_crlf,
     get_length_of_current_element,
@@ -37,7 +37,7 @@ impl RespSerialize for RespBulkString {
     }
 }
 
-impl RespElementConstructor for RespBulkString {
+impl RespDeserialize for RespBulkString {
     fn from_byte_slice(input: &[u8]) -> Result<(Self, &[u8]), RespParseError> {
         if input[0] != b'$' {
             return Err(RespParseError::UnknownTypePrefix);
