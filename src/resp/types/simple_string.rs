@@ -1,4 +1,5 @@
 use crate::resp::parser::{
+    RespSerialize,
     RespElementConstructor,
     RespParseError,
     read_until_crlf,
@@ -7,6 +8,16 @@ use crate::resp::parser::{
 #[derive(Debug)]
 pub struct RespSimpleString {
     pub value: String,
+}
+
+impl RespSerialize for RespSimpleString {
+    fn to_bytes(&self) -> Vec<u8> {
+        let mut acc = vec![b'+'];
+
+        acc.extend(self.value.as_bytes());
+
+        acc
+    }
 }
 
 impl RespElementConstructor for RespSimpleString {

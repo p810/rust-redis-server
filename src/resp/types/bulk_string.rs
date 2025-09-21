@@ -1,4 +1,7 @@
+use crate::resp::RESP_DELIMITER;
+
 use crate::resp::parser::{
+    RespSerialize,
     RespElementConstructor,
     RespParseError,
     read_until_crlf,
@@ -9,6 +12,29 @@ use crate::resp::parser::{
 pub struct RespBulkString {
     pub length: usize,
     pub value: Box<[u8]>,
+}
+
+impl RespBulkString {
+    pub fn new(value: &[u8]) -> RespBulkString {
+        RespBulkString {
+            value: value.into(),
+            length: value.len(),
+        }
+    }
+}
+
+impl RespSerialize for RespBulkString {
+    fn to_bytes(&self) -> Vec<u8> {
+        let mut acc = vec![b'$'];
+
+        acc.extend(self.length.to_string().as_bytes());
+        acc.extend_from_slice(RESP_DELIMITER);
+
+        acc.extend_from_slice(self.value.iter().as_slice());
+        acc.extend_from_slice(RESP_DELIMITER);
+
+        acc
+    }
 }
 
 impl RespElementConstructor for RespBulkString {
