@@ -60,13 +60,10 @@ pub fn spawn_worker() -> Sender<WorkerMessage> {
                         }
                     };
 
-                    match reply.send(Ok(response)) {
-                        Err(e) => {
-                            eprintln!("Unable to send response back to main thread");
-                            dbg!(e);
-                        }
-                        _ => {},
-                    };
+                    if let Err(e) = reply.send(Ok(response)) {
+                        eprintln!("Unable to send response back to main thread");
+                        dbg!(e);
+                    }
                 }
                 Err(RecvTimeoutError::Timeout) => {
                     // to do: make the budget configurable
