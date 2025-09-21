@@ -2,8 +2,11 @@ use std::sync::mpsc::{channel, Sender, RecvTimeoutError};
 use std::thread;
 use std::time::Duration;
 
-use crate::store::Database;
+use crate::resp::parser::RespSerialize;
+use crate::resp::types::RespBulkString;
 use crate::resp::commands::{RespCommand, RespCommandError};
+use crate::resp::{RESP_EMPTY_STRING, RESP_OK};
+use crate::store::Database;
 
 pub struct WorkerMessage {
     pub op: RespCommand,
@@ -37,31 +40,22 @@ pub fn spawn_worker() -> Sender<WorkerMessage> {
                             Some("+PONG\r\n".into())
                         },
                         RespCommand::Echo(e) => {
-                            let response = format!("${}\r\n{}", e.value.len(), e.value);
+                            let response = RespBulkString::new(e.value.as_bytes());
                             
-                            Some(response.as_bytes().to_vec())
+                            Some(response.to_bytes())
                         }
                         RespCommand::Set(s) => {
                             db.set(s.key.as_str(), &s.value, s.ttl);
 
-                            Some("+OK\r\n".into())
+                            Some(RESP_OK.to_vec())
                         }
                         RespCommand::Get(g) => {
                             if let Some(entry) = db.get(g.key.as_str()) {
-                                let mut response = vec![b'$'];
-                                let separator = &[b'\r', b'\n'];
+                                let response = RespBulkString::new(&entry.value);
 
-                                // Add the length and then start a new line
-                                response.extend(entry.value.len().to_string().as_bytes());
-                                response.extend(separator);
-
-                                // Add the key's stored contents and a final new line
-                                response.extend(entry.value.clone());
-                                response.extend(separator);
-
-                                Some(response)
+                                Some(response.to_bytes())
                             } else {
-                                Some("$-1\r\n".into())
+                                Some(RESP_EMPTY_STRING.to_vec())
                             }
                         }
                     };
