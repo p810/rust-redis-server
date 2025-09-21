@@ -5,6 +5,10 @@ pub enum RespParseError {
     InvalidElement,
 }
 
+pub trait RespSerialize {
+    fn to_bytes(&self) -> Vec<u8>;
+}
+
 pub trait RespElementConstructor {
     /// Parses the given byte slice and returns a `Result` that contains either:
     /// 
