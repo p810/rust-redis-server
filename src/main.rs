@@ -72,12 +72,9 @@ fn main() -> Result<(), Error> {
 
                             client.pending.push_back(response_rx);
 
-                            match worker_tx.send(message) {
-                                Err(e) => {
-                                    eprintln!("Unable to send message to worker thread");
-                                    dbg!(e);
-                                }
-                                _ => {}
+                            if let Err(e) = worker_tx.send(message) {
+                                eprintln!("Unable to send message to worker thread");
+                                dbg!(e);
                             };
                         }
                         Err(_) => {
