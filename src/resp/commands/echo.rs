@@ -8,7 +8,7 @@ pub struct RespEchoCommand {
 }
 
 impl RespCommandConstructor for RespEchoCommand {
-    fn from_array(input: &RespArray) -> Result<RespEchoCommand, RespCommandError> {
+    fn from_array(input: RespArray) -> Result<RespEchoCommand, RespCommandError> {
         let Some(input_string) = input.elements.get(1) else {
             return Err(RespCommandError::ParsingError);
         };

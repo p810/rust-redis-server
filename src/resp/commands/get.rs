@@ -8,7 +8,7 @@ pub struct RespGetCommand {
 }
 
 impl RespCommandConstructor for RespGetCommand {
-    fn from_array(input: &RespArray) -> Result<RespGetCommand, RespCommandError> {
+    fn from_array(input: RespArray) -> Result<RespGetCommand, RespCommandError> {
         let Some(key_element) = input.elements.get(1) else {
             return Err(RespCommandError::InvalidArgument);
         };

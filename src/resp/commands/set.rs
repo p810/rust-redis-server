@@ -12,7 +12,7 @@ pub struct RespSetCommand {
 }
 
 impl RespCommandConstructor for RespSetCommand {
-    fn from_array(input: &RespArray) -> Result<RespSetCommand, RespCommandError> {
+    fn from_array(input: RespArray) -> Result<RespSetCommand, RespCommandError> {
         if input.length < 3 {
             return Err(RespCommandError::InvalidArgument);
         }

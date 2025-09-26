@@ -26,13 +26,13 @@ pub enum RespCommandError {
 }
 
 pub trait RespCommandConstructor {
-    fn from_array(array: &RespArray) -> Result<Self, RespCommandError>
+    fn from_array(array: RespArray) -> Result<Self, RespCommandError>
     where
         Self: Sized;
 }
 
 impl RespCommandConstructor for RespCommand {
-    fn from_array(input: &RespArray) -> Result<RespCommand, RespCommandError> {
+    fn from_array(input: RespArray) -> Result<RespCommand, RespCommandError> {
         let Some(first_element) = input.elements.first() else {
             return Err(RespCommandError::ParsingError);
         };
@@ -58,7 +58,7 @@ pub fn get_command_from_input(packet: &[u8]) -> Result<RespCommand, RespCommandE
         Ok((kind, _)) => {
             match kind {
                 RespElement::Array(a) =>
-                    RespCommand::from_array(&a),
+                    RespCommand::from_array(a),
                 RespElement::SimpleString(s) => {
                     if s.value.to_lowercase() == "ping" {
                         Ok(RespCommand::Ping)
