@@ -1,3 +1,10 @@
+### 0.3.0
+- Adds the `RespSerialize` trait for converting `RespElement` types to RESP serialized payloads
+- Renames `RespElementConstructor` to `RespDeserialize` for parity and clarity
+- Adds constructor methods for the various element types
+- Adds a few constants for commonly reused byte sequences (e.g. the delimiter / terminator sequence `\r\n`)
+- Updates the command structs to take ownership of the RESP elements they're constructed from
+
 ### 0.2.0
 - Adds an abstraction for the data store, and some logic to implement key expiration
 - Adds a single worker thread to handle operations against the store, and reworks some of the event loop to reflect this change
